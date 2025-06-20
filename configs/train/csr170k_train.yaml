@@ -1,0 +1,14 @@
+dataset: "datasets/commonsense_170k.json"
+eval_dataset: "boolq+piqa+social-iqa+hellaswag+winogrande+arc-easy+arc-challenge+openbookqa"
+per_device_train_batch_size: 8
+num_train_epochs: 1
+learning_rate: 3e-4
+lr_scheduler_type: cosine
+warmup_ratio: 0.04
+eval_strategy: "no"
+save_strategy: "no"
+logging_steps: 1
+peft: "lora"
+bf16: true
+lora_dropout: 0.0
+ddp_find_unused_parameters: false

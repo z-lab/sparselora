@@ -1,0 +1,12 @@
+max_seq_length: 128
+per_device_train_batch_size: 8
+learning_rate: 5e-5
+num_train_epochs: 5
+eval_strategy: epoch
+peft: lora
+bf16: true
+lora_dropout: 0.0
+ddp_find_unused_parameters: false
+
+lora_r: 32
+lora_alpha: 64

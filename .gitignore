@@ -1,0 +1,34 @@
+# Ignore log files
+*.log
+
+# Ignore data files
+*.json
+
+# Ignore build directories
+build/
+dist/
+*.egg-info/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore data and run directories
+datasets/
+checkpoints/
+checkpoint/
+data_cache/
+unsloth_compiled_cache/
+humaneval/
+human-eval/
+slurm/
+wandb/
+
+# Ignore model files
+*.pt
+predictor_weights/
+low_rank_weights/
