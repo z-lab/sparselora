@@ -1,5 +1,5 @@
 # SparseLoRA: Accelerating LLM Fine-Tuning with Contextual Sparsity
-[[Paper]()]
+[[Paper](https://arxiv.org/abs/2506.16500)]
 [[Project Page](https://z-lab.ai/projects/sparselora/)]
 
 ![method1](assets/figures/teaser.png)
