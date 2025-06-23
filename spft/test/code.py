@@ -5,19 +5,11 @@ from tqdm import tqdm
 import math
 from human_eval.data import write_jsonl, read_problems
 
-import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
 import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, DistributedSampler
 
-import transformers 
-from transformers import default_data_collator, AutoTokenizer, AutoModelForCausalLM
-import accelerate
-from datasets import load_dataset, Dataset
-from peft import PeftModel, PeftConfig 
-# from spft.utils import distributed as dist
+from datasets import Dataset
+
 
 ALPACA_PREFIX_TEMPLATE_MD = """Below is an instruction that describes a task.\n Write a response that appropriately completes the request.
 
@@ -90,16 +82,9 @@ import argparse
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name_or_path", type=str, required=True)
-    # parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--max_new_tokens", type=int, default=512)
     parser.add_argument("--base_model_name_or_path", type=str)
-    #* WeLore args
-    # parser.add_argument("--we_lore", type=int, default=0)
-    # parser.add_argument("--we_lore_path_rank_k_checkpoint", type=str)
-    # parser.add_argument("--we_lore_singular_value_path", type=str)
-    # parser.add_argument("--we_lore_model_rank", type=int, default=50)
-    # parser.add_argument("--we_lore_min_ratio", type=float, default=0.4999)
     
     args = parser.parse_args()
     
@@ -114,14 +99,8 @@ def main() -> None:
 
     
     # Step 1: load model
-    # model = transformers.LlamaForCausalLM.from_pretrained("./models/llama-2-7b", max_length=1024, attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16, device_map={"": int(os.environ.get("LOCAL_RANK") or 0)})
-    # tokenizer = transformers.AutoTokenizer.from_pretrained("./models/llama-2-7b", padding_side="left")
-    # dist.init()
-    # devices = range(dist.local_rank(), torch.cuda.device_count(), dist.local_size())
-    # torch.cuda.set_device(devices[0])
-    # max_memory = {device: torch.cuda.get_device_properties(device).total_memory for device in devices}
-
-    
+    from torch.utils.data import DataLoader
+    from transformers import default_data_collator, AutoTokenizer, AutoModelForCausalLM
     from peft import AutoPeftModelForCausalLM
     
     model = AutoPeftModelForCausalLM.from_pretrained(
@@ -129,7 +108,6 @@ def main() -> None:
     attn_implementation="flash_attention_2",
     torch_dtype=torch.float16,
     device_map="auto",
-    # max_memory=max_memory,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -138,23 +116,6 @@ def main() -> None:
         padding_side="left",
         use_fast=False,
     )
-    
-    # args.model_name_or_path = "NousResearch/Llama-2-7b-hf" #
-    # model = AutoModelForCausalLM.from_pretrained(
-    #         args.model_name_or_path,
-    #         attn_implementation="flash_attention_2",
-    #         torch_dtype=torch.float16,
-    #         device_map="auto",
-    #         # max_memory=max_memory,
-    #     )
-        
-    # tokenizer = AutoTokenizer.from_pretrained(
-    #     args.model_name_or_path,
-    #     model_max_length=512,
-    #     padding_side="left",
-    #     use_fast=False,
-    # )
-    
     
     if len(tokenizer) > 32000: #* Llama3
         print("Using LLaMA 3 tokenizer")
@@ -168,14 +129,6 @@ def main() -> None:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # from peft import get_peft_model, LoraConfig
-    # lora_path = f"./logs/transformers/llama-2-7b/code/{method}/{seed}"
-    
-    # lora_config = LoraConfig.from_pretrained(lora_path)
-    # model = PeftModel.from_pretrained(model, lora_path, config=lora_config)
-    
-    # model.to(local_rank)
-    # model.eval()
     
     # Step 2: load dataset
     dataset = read_problems()
@@ -246,8 +199,6 @@ def main() -> None:
     if dist.get_rank() == 0:
         print(f"Size of predictions: {len(all_predictions)}")
         target_name = args.model_name_or_path + "generated_completions.jsonl" 
-        # t = args.model_name_or_path.replace("/", "-")
-        # target_name = f"/rscratch/xiuyu/samir/{t}-zero-shot-generated_completions.jsonl"
         write_jsonl(target_name, all_predictions)
         print(f"Generated samples saved to {target_name}")
         

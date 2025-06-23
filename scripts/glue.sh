@@ -11,7 +11,7 @@ CONFIGS=(
 bash scripts/setup/predictor.sh $MODEL configs/sparsity/$CONFIGS
 
 
-CHECKPOINT_PATH=checkpoints/$MODEL_NAME/GLUE #$RUN_NAME/s$SEED
+CHECKPOINT_PATH=checkpoints/$MODEL/GLUE
 
 TASKS=(
     rte

@@ -13,7 +13,7 @@ bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 shift 2
 
 SEED=42
-CHECKPOINT_PATH=checkpoints/$MODEL_NAME/wizardlm
+CHECKPOINT_PATH=checkpoints/$MODEL/wizardlm
 
 #* Check if "enable-unsloth is in @"
 if [[ "$@" == *"--enable-unsloth"* ]]; then

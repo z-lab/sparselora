@@ -7,7 +7,6 @@ import torch
 from peft import AutoPeftModelForCausalLM
 from tabulate import tabulate
 from tqdm import trange
-from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
 
 from spft.utils import distributed as dist
 
@@ -84,6 +83,8 @@ def main() -> None:
     torch.cuda.set_device(devices[0])
     max_memory = {device: torch.cuda.get_device_properties(device).total_memory for device in devices}
 
+    from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+    
     model = AutoPeftModelForCausalLM.from_pretrained(
     args.model_name_or_path,
     attn_implementation="flash_attention_2",

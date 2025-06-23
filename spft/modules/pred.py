@@ -144,7 +144,6 @@ class FFNPredictor(nn.Module):
     def forward(self, x: torch.Tensor, sparsity: float) -> torch.Tensor:
         if self.seq_avg:
             x = x.mean(dim=1, keepdim=True)
-            # print("FFN Seq Avg", x.shape)
         
         x = x.view(1, -1, x.shape[-1]).expand(2, -1, -1)
 

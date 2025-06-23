@@ -1,6 +1,7 @@
 # SparseLoRA: Accelerating LLM Fine-Tuning with Contextual Sparsity
 [[Paper](https://arxiv.org/abs/2506.16500)]
 [[Project Page](https://z-lab.ai/projects/sparselora/)]
+[[Slides](https://icml.cc/media/icml-2025/Slides/43493.pdf)]
 
 ![method1](assets/figures/teaser.png)
 
@@ -64,17 +65,17 @@ mode: "svd_8"
 # Specifies whether output tokens are processed densely (True) or sparsely (False) 
 skip_output_tokens: True
 # Naming converion used in creating the run-directory and wandb-streaming
-ffn_sparsity: "ffn=0.97x21-0.5x2"
-qkvo_sparsity: "qkv=0.25x11"
+ffn_sparsity: "ffn=0.99x28"
+qkvo_sparsity: "qkv=0.75x14"
 
 #* Layer-wise Sparsity
 sparsity:
   layers.0.mlp: 0
   layers.0.self_attn: 0
   ...
-  layers.29.mlp: 0.97
-  layers.29.self_attn: 0.25
-  layers.30.mlp: 0.5
+  layers.29.mlp: 0.99
+  layers.29.self_attn: 0.75
+  layers.30.mlp: 0.99
   layers.30.self_attn: 0
   layers.31.mlp: 0
   layers.31.self_attn: 0
@@ -86,7 +87,7 @@ Our existing evaluation benchmarks will automatically detect if the SVD predicto
 ```bash
 bash scripts/setup/predictor.sh {HF_MODEL_ID} {SPARSITY_CONFIG}
 ```
-By default this will download the SVD predictors from our [HF page](https://huggingface.co/z-lab/sparselora) if we have pre-computed them for the specific model `HF_MODEL_ID` and configuration `SPARSITY_CONFIG` else, they will be computed on your machine. Each model's SVD predictors at rank 8 only occupy about 30 Mb of space.
+By default this will download the SVD predictors from our [HF page](https://huggingface.co/z-lab/sparselora-svd-estimator) if we have pre-computed them for the specific model `HF_MODEL_ID` and configuration `SPARSITY_CONFIG` else, they will be computed on your machine. Each model's SVD predictors at rank 8 only occupy about 30 Mb of space.
 
 
 ### Commonsense \& Arithmetic Reasoning

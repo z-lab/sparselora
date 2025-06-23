@@ -52,7 +52,7 @@ class DataTrainingArguments:
     eval_dataset: Optional[str] = field(default=None)
     model_max_length: Optional[int] = field(default=512)
     
-    #* UltraChat args:
+    #* Instruction Following args:
     max_seq_length: Optional[int] = field(default=512)
     append_concat_token: bool = field(default=False)
     add_special_tokens: bool = field(default=False)

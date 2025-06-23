@@ -9,7 +9,7 @@ fi
 
 
 MODEL=${1:-"NousResearch/Meta-Llama-3-8B-Instruct"}
-SPARSITY_CONFIG=${2:-llama3-8b-math10k-aggressive.yaml}
+SPARSITY_CONFIG=${2:-llama3-8b-math10k.yaml}
 DATASET=${3:-"math10k"}
 
 #* Check Predictors:
@@ -19,7 +19,7 @@ bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 shift 2
 
 SEED=42
-CHECKPOINT_PATH=checkpoints/$MODEL_NAME/speedup
+CHECKPOINT_PATH=checkpoints/$MODEL/speedup
 
 #* Check if "enable-unsloth is in @"
 if [[ "$@" == *"--enable-unsloth"* ]]; then

@@ -9,7 +9,7 @@ fi
 
 
 MODEL=${1:-"NousResearch/Meta-Llama-3-8B-Instruct"}
-SPARSITY_CONFIG=${2:-llama3-8b-csr170k.yaml}
+SPARSITY_CONFIG=${2:-llama3-8b-csr.yaml}
 
 #* Check Predictors:
 bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
@@ -18,7 +18,7 @@ bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 shift 2
 
 SEED=42
-CHECKPOINT_PATH=checkpoints/$MODEL_NAME/csr170k
+CHECKPOINT_PATH=checkpoints/$MODEL/csr170k
 
 #* Check if "enable-unsloth is in @"
 if [[ "$@" == *"--enable-unsloth"* ]]; then

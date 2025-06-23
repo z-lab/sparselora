@@ -13,7 +13,7 @@ bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 shift 2
 
 SEED=42
-CHECKPOINT_PATH=checkpoints/$MODEL_NAME/codefeedback
+CHECKPOINT_PATH=checkpoints/$MODEL/codefeedback
 
 #* Check if "enable-unsloth is in @"
 if [[ "$@" == *"--enable-unsloth"* ]]; then
@@ -43,4 +43,5 @@ torchrun --nproc_per_node=8 \
     --num-train-epochs 1 \
     --config configs/train/codefeedback_train.yaml \
     --spft configs/sparsity/$SPARSITY_CONFIG \
+    --eval_only True \
     "$@"  # <<-- forward all extra args

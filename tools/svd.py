@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 console = Console()
-BASE_REPO_ID = "z-lab/sparselora"
+BASE_REPO_ID = "z-lab/sparselora-svd-estimator"
 LOCAL_PREDICTOR_BASE = "spft/modules/low_rank_weights"
 
 def parse_config(sparsity_config):
