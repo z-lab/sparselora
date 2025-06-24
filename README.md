@@ -204,7 +204,7 @@ bash scripts/math10k.sh "NousResearch/Meta-Llama-3-8B-Instruct" "llama3-8b-math1
   Integration with <img src="https://raw.githubusercontent.com/unslothai/unsloth/main/images/unsloth%20logo%20white%20text.png" alt="Alt Text" style="height: 40px; vertical-align: middle;"/>
 </h2>
 
-SparseLoRA is designed to acclerate fine-tuning by contextually reducing the effective computation in each training step, meanwhile Unsloth leverages a variety of kernel fusions to reduce trainign overhead. As such, our method can be used to further acclerate Unsloth training. We provide an out of the box integration that can be installed and run as:
+SparseLoRA is designed to acclerate fine-tuning by contextually reducing the effective computation in each training step, meanwhile Unsloth leverages a variety of kernel fusions to reduce training overhead. As such, our method can be used to further acclerate Unsloth training. We provide an out of the box integration that can be installed and run as:
 
 ### Environment Setup
 ```bash
@@ -226,9 +226,10 @@ If you find SparseLoRA useful or relevant to your project and research, please k
 
 ```bibtex
 @inproceedings{khaki2025sparselora,
-  title = {SparseLoRA: Accelerating LLM Fine-Tuning with Contextual Sparsity},
-  author = {Khaki, Samir and Li, Xiuyu and Guo, Junxian and Zhu, Ligeng and Plataniotis, Konstantinos N and Yazdanbakhsh, Amir and Keutzer, Kurt and Han, Song and Liu, Zhijian},
-  booktitle = {International Conference on Machine Learning (ICML)},
-  year = {2025}
+  title={SparseLo{RA}: Accelerating {LLM} Fine-Tuning with Contextual Sparsity},
+  author={Samir Khaki and Xiuyu Li and Junxian Guo and Ligeng Zhu and Konstantinos N. Plataniotis and Amir Yazdanbakhsh and Kurt Keutzer and Song Han and Zhijian Liu},
+  booktitle={Forty-second International Conference on Machine Learning},
+  year={2025},
+  url={https://openreview.net/forum?id=z83rodY0Pw}
 }
 ```
