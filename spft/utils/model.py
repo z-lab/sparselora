@@ -3,6 +3,7 @@ from peft import LoraConfig, get_peft_model
 import torch
 from liger_kernel.transformers import apply_liger_kernel_to_llama
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from .io import rank0_print
 
 def create_model_and_tokenizer(model_args: ModelArguments, data_args: DataTrainingArguments, training_args: TrainingArguments):
     """
@@ -58,6 +59,9 @@ def create_model_and_tokenizer(model_args: ModelArguments, data_args: DataTraini
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
+    if model_args.chat_template_format != "none":
+        rank0_print(f"Using custom chat template format: {model_args.chat_template_format}")
+        tokenizer.chat_template = model_args.chat_template_format
     
     # Set up PEFT
     if training_args.peft is not None:
@@ -104,6 +108,10 @@ def unsloth_initialize(model_args: ModelArguments, data_args: DataTrainingArgume
     
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        
+    if model_args.chat_template_format != "none":
+        rank0_print(f"Using custom chat template format: {model_args.chat_template_format}")
+        tokenizer.chat_template_format = model_args.chat_template_format
 
     if training_args.peft is not None:
         model = FastLanguageModel.get_peft_model(

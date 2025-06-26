@@ -1,7 +1,6 @@
 
 #* General Settings
 start_step: 0.05
-# mode: "svd_8"
 mode: "svd_8"
 skip_output_tokens: True
 ffn_sparsity: "ffn=0.99x28"

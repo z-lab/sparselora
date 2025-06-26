@@ -6,7 +6,7 @@ import transformers
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
-    peft: Optional[str] = field(default=None)
+    peft: Optional[str] = field(default="lora")
     benchmark: bool = field(default=False)
     lora_r: int = field(default=32)
     lora_alpha: int = field(default=64)

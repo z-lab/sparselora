@@ -13,6 +13,8 @@ from .modules import SPARSITY_MAPPING, SparseModule
 from .utils import io, set_submodule
 import peft
 from tqdm import tqdm
+from colorama import Fore, Style
+desc_text = f"{Fore.GREEN}🚀 Patching Model --> Fast Fine-tuning!{Style.RESET_ALL}"
 import torch.distributed as dist
 
 __all__ = ["SPFTConfig", "get_spft_model", "get_spft_callback"]
@@ -167,7 +169,13 @@ def get_spft_model(model: nn.Module, config: SPFTConfig, **kwargs: Dict[str, str
         
     svd_predictors_loaded = 0
     total_modules = sum(1 for _ in model.named_modules())
-    with tqdm(total=total_modules, desc="Setting submodules and loading SVD predictors", disable=(dist.is_initialized() and dist.get_rank() != 0)) as pbar:
+    with tqdm(
+            total=total_modules,
+            desc=desc_text,
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
+            ascii=" ░▒█",
+            disable=(dist.is_initialized() and dist.get_rank() != 0)
+        ) as pbar:
         for name, module in model.named_modules():
             l_name, sparsity = next(((suffix, val) for suffix, val in config.sparsity.items() if name.endswith(suffix)), (None, None))
             if sparsity is not None:

@@ -57,10 +57,12 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
         # Set up data collator
         collator = transformers.DataCollatorForSeq2Seq(
             tokenizer,
-            pad_to_multiple_of=512,
+            pad_to_multiple_of=data_args.max_seq_length,
             return_tensors="pt",
             padding=True,
         )
+        
+        print("Training save strategy: ", training_args.save_strategy)
        
         trainer = transformers.Trainer(
             model=model,
@@ -156,7 +158,6 @@ if __name__ == "__main__":
 
     model_args, data_args, training_args, remaining_args = parser.parse_args_into_dataclasses(return_remaining_strings=True)
     
-    # training_args.full_determinism = False
     set_seed(training_args.seed)
     
     main(model_args, data_args, training_args, cli_spft_keys)

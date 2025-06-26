@@ -185,7 +185,7 @@ def chat_preprocess(data) -> Dict[str, str]:
         "output": y,
     }
 
-@processor.cache_to_disk("data_cache")
+@processor.cache_to_disk("datasets")
 def load_wizardlm_dataset(
     data_args: Optional[Dict[str, Any]] = None,
     tokenizer: Optional[AutoTokenizer] = None,
@@ -241,7 +241,6 @@ def load_wizardlm_dataset(
     preprocessor = processor.WizardLM52k_Preprocessor(
             tokenizer=tokenizer,
             tokenizer_kwargs={
-                "padding": "max_length",
                 "truncation": True,
                 "return_tensors": "pt",
                 "max_length": data_args.model_max_length,
@@ -260,7 +259,7 @@ def load_wizardlm_dataset(
         "train": datasets["train"],
         "eval": datasets["eval"]
     }
-    
+
 
 DATA_REGISTRY = {
     "CodeFeedback-Filtered-Instruction": load_codefeedback_dataset,

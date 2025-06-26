@@ -71,7 +71,7 @@ class WizardLM52k_Preprocessor(DatasetPreprocessor):
 
     def __call__(self, example):
         """
-        Preprocess the CoLA dataset into a text-to-text format.
+        Preprocess the WizardLM dataset into a text-to-text format.
         """
         if isinstance(example["instruction"], str):
             raise NotImplementedError
@@ -81,7 +81,7 @@ class WizardLM52k_Preprocessor(DatasetPreprocessor):
                 x + " " + y + self.tokenizer.eos_token 
                 for (x, y) in zip(example["instruction"], example["output"])
             ]
-            encodings = self.tokenizer(combined_text, return_tensors="pt", padding="max_length", truncation=True, max_length=1024)
+            encodings = self.tokenizer(combined_text, return_tensors="pt", padding=True, truncation=True, max_length=2048)
             input_text_length = [
                 len(self.tokenizer(example["instruction"][i], return_tensors="pt")["input_ids"][0])
                 for i in range(len(example["instruction"]))
