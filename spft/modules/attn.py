@@ -37,12 +37,6 @@ class SparseLlamaFlashAttention(SparseModule):
             self.load_predictor(base,cfg)
         
         self.per_channel = not cfg.qk_per_head
-        if cfg.add_sparse_to_dense:
-            raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-            self.dense_to_sparse_ratio = cfg.dense_to_sparse_ratio
-            print("Addint output token sparsity at ratio: ", self.dense_to_sparse_ratio)
-        else:
-            self.dense_to_sparse_ratio = None
 
 
     def kernel_proj_o_forward(self, x, masks, vo_indices):
@@ -51,18 +45,9 @@ class SparseLlamaFlashAttention(SparseModule):
             return self.o_proj(x, vo_indices)
         
         else: #* Split
-            if self.dense_to_sparse_ratio is not None:
-                raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-                #* Dense to Sparse Ratio:
-                sparse_vo_indices, dense_vo_indices = vo_indices
-            else:
-                #* No Dense to Sparse Ratio:
-                sparse_vo_indices = vo_indices
-                dense_vo_indices = None
-            # print("Sparse Train, ", dense_vo_indices.shape, sparse_vo_indices.shape)
-            # sparse_vo_indices, dense_vo_indices = vo_indices
+            sparse_vo_indices = vo_indices
             sparse_x, dense_x = self.token_splits(x, masks)
-            dense_o = self.o_proj(dense_x, dense_vo_indices)
+            dense_o = self.o_proj(dense_x)
             sparse_o = self.o_proj(sparse_x, sparse_vo_indices)
             
             # #* Token Order: [Sparse | Dense] --> [In | Out]
@@ -78,21 +63,8 @@ class SparseLlamaFlashAttention(SparseModule):
             
         else: #* Split
             sparse_x, dense_x = self.token_splits(x, masks)
-            #* Output Sparsity:
-            if self.dense_to_sparse_ratio is not None:
-                raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-                #* Dense to Sparse Ratio:               
-                sparse_q_indices, dense_q_indices = sparse_q_indices
-                sparse_k_indices, dense_k_indices = sparse_k_indices
-                sparse_v_indices, dense_v_indices = sparse_v_indices
-            else:
-                dense_q_indices, dense_k_indices, dense_v_indices = None, None, None
-            # print("Sparse Train, ", dense_q_indices.shape, sparse_q_indices.shape)
-            
-            #* Dense Projections:
-            dense_q, dense_k, dense_v = self.q_proj(dense_x, dense_q_indices), self.k_proj(dense_x, dense_k_indices), self.v_proj(dense_x, dense_v_indices)
+            dense_q, dense_k, dense_v = self.q_proj(dense_x), self.k_proj(dense_x), self.v_proj(dense_x)
             sparse_q, sparse_k, sparse_v = self.q_proj(sparse_x, sparse_q_indices), self.k_proj(sparse_x, sparse_k_indices), self.v_proj(sparse_x, sparse_v_indices)
-            # print(f"sparse_q: {sparse_q.shape}, dense_q: {dense_q.shape}, sparse_k: {sparse_k.shape}, dense_k: {dense_k.shape}, sparse_v: {sparse_v.shape}, dense_v: {dense_v.shape}")
             
             #* Let's log the sparsity:
             self.stats["sparsity/q"] = 1-self.q_proj.sparsity
@@ -103,11 +75,7 @@ class SparseLlamaFlashAttention(SparseModule):
             out_q = self.token_join(sparse=sparse_q, dense=dense_q, masks=masks)
             out_k = self.token_join(sparse=sparse_k, dense=dense_k, masks=masks)
             out_v = self.token_join(sparse=sparse_v, dense=dense_v, masks=masks)
-            
-            
-        
-           
-            
+      
         return out_q, out_k, out_v
         
     def mask_proj_o_forward(self, attn_output, masks, vo_indices):
@@ -315,15 +283,6 @@ class SparseLlamaFlashAttention(SparseModule):
             if self.mode == "svd":
                 
                 indices  = self.pred_attn(hidden_states)
-                if self.dense_to_sparse_ratio is not None:
-                    raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-                    dense_indices  = self.pred_attn(hidden_states, sparsity=self.dense_to_sparse_ratio*self.sparsity)
-                    
-                    indices = (
-                        (indices[0], dense_indices[0]),
-                        (indices[1], dense_indices[1]),
-                        (indices[2], dense_indices[2]),
-                    )
                 query_states, key_states, value_states = self.kernel_proj_forward(hidden_states, masks, indices)
                 
                 

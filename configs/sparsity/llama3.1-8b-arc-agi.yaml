@@ -1,0 +1,73 @@
+
+#* General Settings
+start_step: 0.1
+mode: "svd_8"
+skip_output_tokens: True
+ffn_sparsity: "ffn=0.9x14"
+qkvo_sparsity: "qkv=0"
+#* Layer-wise Sparsity
+sparsity:
+  layers.0.mlp: 0
+  layers.0.self_attn: 0
+  layers.1.mlp: 0
+  layers.1.self_attn: 0
+  layers.2.mlp: 0
+  layers.2.self_attn: 0
+  layers.3.mlp: 0
+  layers.3.self_attn: 0
+  layers.4.mlp: 0
+  layers.4.self_attn: 0
+  layers.5.mlp: 0
+  layers.5.self_attn: 0
+  layers.6.mlp: 0
+  layers.6.self_attn: 0
+  layers.7.mlp: 0
+  layers.7.self_attn: 0
+  layers.8.mlp: 0
+  layers.8.self_attn: 0
+  layers.9.mlp: 0
+  layers.9.self_attn: 0
+  layers.10.mlp: 0
+  layers.10.self_attn: 0
+  layers.11.mlp: 0
+  layers.11.self_attn: 0
+  layers.12.mlp: 0
+  layers.12.self_attn: 0
+  layers.13.mlp: 0
+  layers.13.self_attn: 0
+  layers.14.mlp: 0
+  layers.14.self_attn: 0
+  layers.15.mlp: 0
+  layers.15.self_attn: 0
+  layers.16.mlp: 0.9
+  layers.16.self_attn: 0
+  layers.17.mlp: 0.9
+  layers.17.self_attn: 0
+  layers.18.mlp: 0.9
+  layers.18.self_attn: 0
+  layers.19.mlp: 0.9
+  layers.19.self_attn: 0
+  layers.20.mlp: 0.9
+  layers.20.self_attn: 0
+  layers.21.mlp: 0.9
+  layers.21.self_attn: 0
+  layers.22.mlp: 0.9
+  layers.22.self_attn: 0
+  layers.23.mlp: 0.9
+  layers.23.self_attn: 0
+  layers.24.mlp: 0.9
+  layers.24.self_attn: 0
+  layers.25.mlp: 0.9
+  layers.25.self_attn: 0
+  layers.26.mlp: 0.9
+  layers.26.self_attn: 0
+  layers.27.mlp: 0.9
+  layers.27.self_attn: 0
+  layers.28.mlp: 0.9
+  layers.28.self_attn: 0
+  layers.29.mlp: 0.9
+  layers.29.self_attn: 0
+  layers.30.mlp: 0
+  layers.30.self_attn: 0
+  layers.31.mlp: 0
+  layers.31.self_attn: 0

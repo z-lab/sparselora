@@ -7,9 +7,6 @@ CONFIGS=(
 
 )
 
-#* Check Predictors:
-bash scripts/setup/predictor.sh $MODEL configs/sparsity/$CONFIGS
-
 
 CHECKPOINT_PATH=checkpoints/$MODEL/GLUE
 
@@ -32,6 +29,8 @@ do
 
     for CONFIG in ${CONFIGS[@]}
     do
+        #* Check SVD Estimator:
+        bash scripts/setup/svd_estimator.sh $MODEL configs/sparsity/$CONFIG
 
         for SEED in ${SEEDS[@]}
         do

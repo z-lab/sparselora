@@ -111,14 +111,13 @@ def unsloth_initialize(model_args: ModelArguments, data_args: DataTrainingArgume
         
     if model_args.chat_template_format != "none":
         rank0_print(f"Using custom chat template format: {model_args.chat_template_format}")
-        tokenizer.chat_template_format = model_args.chat_template_format
+        tokenizer.chat_template = model_args.chat_template_format
 
     if training_args.peft is not None:
         model = FastLanguageModel.get_peft_model(
             model,
             r=training_args.lora_r,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                    "gate_proj", "up_proj", "down_proj",],
+            target_modules=training_args.lora_target_modules.split(","), #* Match Default Settings
             lora_alpha=training_args.lora_alpha,
             lora_dropout=training_args.lora_dropout,
             bias = "none",

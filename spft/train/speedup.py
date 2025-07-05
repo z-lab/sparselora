@@ -1,10 +1,11 @@
+import torch
+from torch import distributed as dist
+
 try:
     import unsloth
 except ImportError:
     pass
 
-import torch
-from torch import distributed as dist
 import transformers
 from transformers import HfArgumentParser, set_seed
 from spft.api import SPFTConfig, get_spft_callback, get_spft_model
@@ -65,6 +66,11 @@ def run_warmup_and_benchmark(model, training_args, dataset, collator, callbacks)
  
 
 def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_args: TrainingArguments, cli_keys: set) -> None:    # Set up SPFT
+    
+    if training_args.enable_unsloth:
+        #? Unsloth only patches if LoRA module present on component.
+        training_args.lora_target_modules = "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+    
     assert training_args.spft is not None, "SPFT is not enabled. Please set --spft to a valid path."
     spft_config = SPFTConfig.from_file(training_args.spft)
     spft_config.update([model_args, data_args, training_args], prefix="spft_", cli_keys=cli_keys)
@@ -80,6 +86,7 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
     
     #* Create model + LoRA
     model, tokenizer = create_model_and_tokenizer(model_args, data_args, training_args)
+    spft_config.padding_side = tokenizer.padding_side
     
     callbacks = []
     model = get_spft_model(model, spft_config, enable_unsloth=training_args.enable_unsloth)
@@ -94,6 +101,7 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
     # Simulate dummy datapoints
     dataset_name = data_args.dataset.split("/")[-1].split(".")[0]
     seq_len, out_len = DATA_COLLECTION.get(dataset_name, (512, 3))
+    data_args.max_seq_length = seq_len
     print(f"Generating simulated data for {dataset_name} with seq_len={seq_len} and out_len={out_len}")
     samples = [generate_and_tokenize_prompt_simulated(seq_len=seq_len, out_len=out_len) for _ in range(10000)]
 
@@ -109,7 +117,7 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
     # Set up data collator
     collator = transformers.DataCollatorForSeq2Seq(
         tokenizer,
-        pad_to_multiple_of=512,
+        pad_to_multiple_of=data_args.max_seq_length,
         return_tensors="pt",
         padding=True,
     )
@@ -163,7 +171,6 @@ if __name__ == "__main__":
 
     model_args, data_args, training_args, remaining_args = parser.parse_args_into_dataclasses(return_remaining_strings=True)
     
-    # training_args.full_determinism = False
     set_seed(training_args.seed)
     
     main(model_args, data_args, training_args, cli_spft_keys)

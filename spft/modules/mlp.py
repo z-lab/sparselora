@@ -26,15 +26,6 @@ class SparseLlamaMLP(SparseModule):
         self.layer_idx = idx
         if self.sparsity > 0:
             self.load_predictor(base,cfg)
-            
-            
-        self.benchmark = cfg.benchmark
-        
-        if cfg.add_sparse_to_dense:
-            self.dense_to_sparse_ratio = cfg.dense_to_sparse_ratio
-            print("Addint output token sparsity at ratio: ", self.dense_to_sparse_ratio)
-        else:
-            self.dense_to_sparse_ratio = None
     
     def kernel_forward(self, x: torch.Tensor, masks: Optional[torch.Tensor] = None, sparse_indices = None) -> torch.Tensor:
         
@@ -43,14 +34,9 @@ class SparseLlamaMLP(SparseModule):
         
         else: #* Split
             sparse_x, dense_x = self.token_splits(x, masks)
-            if self.dense_to_sparse_ratio is not None:
-                raise ValueError("Dense to Sparse Ratio is not supported in Llama MLP")
-                sparse_mlp_indices, dense_mlp_indices = sparse_indices
-            else:
-                sparse_mlp_indices = sparse_indices
-                dense_mlp_indices = None
-                
-            dense_x = self._forward_block(dense_x, sparse_indices=dense_mlp_indices)
+            sparse_mlp_indices = sparse_indices
+
+            dense_x = self._forward_block(dense_x)
             sparse_x = self._forward_block(sparse_x, sparse_indices=sparse_mlp_indices)
             #* Token Order: [Sparse | Dense] --> [In | Out]
             out = self.token_join(sparse=sparse_x, dense=dense_x, masks=masks)
@@ -120,7 +106,7 @@ class SparseLlamaMLP(SparseModule):
         x = self._intermediate_forward(x, **kwargs)
         
         if kwargs.get("sparse_indices", None) is not None:
-        #     #* We assume scattered back!
+            #* We assume scattered back!
             self.stats["sparsity/ffn"] = 1-(x.shape[-1] / self.down_proj.weight.shape[-1])
         
         x = self.down_proj(x, **kwargs)
@@ -133,10 +119,6 @@ class SparseLlamaMLP(SparseModule):
             if self.mode == "svd":
                 
                 indices = self.pred_mlp(x)
-                if self.dense_to_sparse_ratio is not None:
-                    raise ValueError("Dense to Sparse Ratio is not supported in Llama MLP")
-                    dense_indices = self.pred_mlp(x, sparsity=self.dense_to_sparse_ratio*self.sparsity)
-                    indices = (indices, dense_indices)
                 x = self.kernel_forward(x, masks, indices)
                 
                 

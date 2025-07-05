@@ -6,12 +6,12 @@ Supports math10k, csr170k, codefeedback, and wizardLM datasets.
 from functools import partial
 from typing import Dict, List, Optional, Union, Any
 import logging
-from datasets import load_dataset, DatasetDict, Dataset
+from datasets import load_dataset, DatasetDict, Dataset, concatenate_datasets
 from transformers import AutoTokenizer
 from tqdm import tqdm
 
 # Import from spft modules
-from spft.data import generate_and_tokenize_prompt_math10k, generate_and_tokenize_prompt_csr170k
+from spft.data import generate_and_tokenize_prompt_math10k, generate_and_tokenize_prompt_csr170k, generate_and_tokenize_arc_agi, tokenize_arc_agi
 import spft.utils.processor as processor
 
 logger = logging.getLogger(__name__)
@@ -260,6 +260,87 @@ def load_wizardlm_dataset(
         "eval": datasets["eval"]
     }
 
+@processor.cache_to_disk("datasets")
+def load_arc_agi_dataset(
+    data_args: Optional[Dict[str, Any]] = None,
+    tokenizer: Optional[AutoTokenizer] = None,
+) -> Dict[str, Any]:
+    """
+    Load and process the ARC AGI dataset.
+    
+    Args:
+        data_args: Data configuration arguments containing dataset path
+        tokenizer: The tokenizer to use for processing
+    
+    Returns:
+        Dictionary with 'train' and 'eval' splits
+    """
+    if data_args is None:
+        raise ValueError("data_args is required and must contain 'dataset' key")
+    
+    # Define the dataset names and sampling ratios
+    dataset_mixer = {
+        "barc0/transduction_formatted_test_time_finetune_for_evaluation": 1.0,
+        "barc0/transduction_formatted_rearc_dataset_100k": 0.05,
+        "barc0/transduction_heavy_100k_jsonl": 0.05
+    }
+
+    # Load and subsample each dataset
+    datasets = []
+    for dataset_name, sample_ratio in dataset_mixer.items():
+        ds = load_dataset(dataset_name, split="train_sft")  # change 'train' to correct split if needed
+        if sample_ratio < 1.0:
+            ds = ds.shuffle(seed=42).select(range(int(len(ds) * sample_ratio)))
+        datasets.append(ds)
+
+    # Combine all datasets
+    dataset = concatenate_datasets(datasets)
+    
+    print(f"Loaded {len(dataset)} samples from ARC AGI datasets, now processing...")
+    
+    #* First Filter Dataset:
+    samples = []
+    total_processed = 0
+    samples_added = 0
+    
+    pbar = tqdm(dataset, desc="Filtering samples")
+    for data_point in pbar:
+        total_processed += 1
+        messages = data_point["messages"]
+        messages = [m for m in messages if m["content"].strip() != ""]
+        if not messages or messages[-1]["role"] != "assistant":
+            raise ValueError("Last message must be from the assistant.")
+        tokenized_full_prompt = tokenize_arc_agi(tokenizer, data_args.max_seq_length, messages, add_generation_prompt=False)
+        
+        if len(tokenized_full_prompt['input_ids']) > data_args.max_seq_length:
+            # print(f"Skipping sample with length {len(tokenized_full_prompt['input_ids'])} > {data_args.max_seq_length}")
+            continue
+        else:
+            samples.append(data_point)
+            samples_added += 1
+            
+        # Update progress bar with current statistics
+        pbar.set_postfix({
+            'Added': samples_added,
+            'Processed': total_processed,
+            'Keep_Rate': f"{samples_added/total_processed:.2%}" if total_processed > 0 else "0%"
+        })
+            
+    dataset = Dataset.from_list(samples)
+    
+    print(f"Loaded {len(dataset)} samples after filtering ARC AGI dataset")
+    
+    dataset = dataset.map(partial(generate_and_tokenize_arc_agi, tokenizer, data_args.max_seq_length),
+                          batched=False, load_from_cache_file=False, desc="Processing ARC AGI dataset"
+                          ).filter(lambda x: x is not None)
+    
+    print(f"Filtered {len(dataset)} samples from ARC AGI dataset")
+    
+    return {
+        "train": dataset,
+        "eval": None
+    }
+    
 
 DATA_REGISTRY = {
     "CodeFeedback-Filtered-Instruction": load_codefeedback_dataset,
@@ -267,6 +348,7 @@ DATA_REGISTRY = {
     "math_10k": load_math10k_dataset,
     "commonsense_170k": load_csr170k_dataset,
     "commonsense_15k": load_csr170k_dataset,
+    "arc_agi": load_arc_agi_dataset,
 }
 
 def load_dataset_by_name(

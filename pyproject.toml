@@ -103,6 +103,7 @@ base = [
     "userpath (==1.9.2)",
     "numpy (==2.1.3)",
     "trl (==0.17.0)",
+    "colorama (==0.4.6)",
 ]
 
 unsloth = [
@@ -192,6 +193,7 @@ unsloth = [
     "userpath (==1.9.2)",
     "numpy (==2.1.3)",
     "trl (==0.17.0)",
+    "colorama (==0.4.6)",
 ]
 
 [tool.black]

@@ -40,7 +40,7 @@ def cache_to_disk(root_datadir):
                 os.makedirs(root_datadir, exist_ok=True)
 
             data_args, tokenizer = args[0], args[1]
-            target_name = f"{data_args.max_seq_length}_{tokenizer.name_or_path.replace('/', '_')}"
+            target_name = f"{data_args.max_seq_length}_{tokenizer.name_or_path.replace('/', '_')}_pad_{tokenizer.padding_side}"
             func_name = func.__name__.replace("/", "")
             cache_file = os.path.join(root_datadir, f"{func_name}_{target_name}.pkl")
             temp_file = cache_file + ".tmp"

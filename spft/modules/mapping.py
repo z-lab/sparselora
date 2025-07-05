@@ -5,32 +5,49 @@ from .linear import SparseLinear
 from .linear4bit import SparseLinear4bit
 from transformers.models.llama.modeling_llama import LlamaMLP
 
-__all__ = ["SPFT_MODULE_MAPPING", "UNSLOTH_MODULE_MAPPING", "SPARSITY_MAPPING"]
+__all__ = ["get_module_mapping", "SPARSITY_MAPPING"]
 
 
-SPFT_MODULE_MAPPING = {
-    LlamaMLP: SparseLlamaMLP,
-    nn.Linear: SparseLinear,
-    #* QLoRA mappings
-    bnb.nn.modules.Linear4bit: SparseLinear4bit,
+
+def get_module_mapping(config, enable_unsloth: bool = False):
+    """
+    Returns the appropriate module mapping based on whether Unsloth is enabled.
+    """
     
-}
-
-UNSLOTH_MODULE_MAPPING = {
-    nn.Linear: SparseLinear,
-}
-
-try:
-    from transformers.models.llama.modeling_llama import LlamaFlashAttention2
-    from .attn import SparseLlamaFlashAttention
-    SPFT_MODULE_MAPPING[LlamaFlashAttention2] = SparseLlamaFlashAttention
-except ImportError or ModuleNotFoundError:
-    # Fallback for newer versions of transformers to support Unsloth
-    from transformers.models.llama.modeling_llama import LlamaAttention
-    from .unsloth import UnslothSparseLlamaAttention, UnslothSparseLlamaMLP
-    UNSLOTH_MODULE_MAPPING[LlamaAttention] = UnslothSparseLlamaAttention
-    UNSLOTH_MODULE_MAPPING[LlamaMLP] = UnslothSparseLlamaMLP
-
+    if not enable_unsloth:
+        from transformers.models.llama.modeling_llama import LlamaFlashAttention2
+        from .attn import SparseLlamaFlashAttention
+        SPFT_MODULE_MAPPING = {
+            LlamaMLP: SparseLlamaMLP,
+            nn.Linear: SparseLinear,
+            LlamaFlashAttention2: SparseLlamaFlashAttention,
+            #* QLoRA mappings
+            bnb.nn.modules.Linear4bit: SparseLinear4bit,
+            
+        }
+        
+        return SPFT_MODULE_MAPPING
+    else:
+        from transformers.models.llama.modeling_llama import LlamaAttention
+        from .unsloth import UnslothSparseLlamaAttention, UnslothSparseLlamaMLP
+        UNSLOTH_MODULE_MAPPING = {
+            nn.Linear: SparseLinear,
+            LlamaAttention: UnslothSparseLlamaAttention,
+        }
+        
+        #* Check if ffn is in lora modules
+        target_set = {"gate_proj", "up_proj", "down_proj"}
+        if target_set.issubset(set(config.lora_target_modules.split(","))):
+            print("[INFO] Using Unsloth on MLP branch.")
+            #* Using Unsloth on MLP branch:
+            UNSLOTH_MODULE_MAPPING[LlamaMLP] = UnslothSparseLlamaMLP
+        else:
+            print("[INFO] Not using Unsloth on MLP branch.")
+            #* Not using Unsloth on MLP branch:
+            UNSLOTH_MODULE_MAPPING[LlamaMLP] = SparseLlamaMLP 
+        
+        return UNSLOTH_MODULE_MAPPING
+    
 
 
 SPARSITY_MAPPING = {

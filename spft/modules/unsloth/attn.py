@@ -37,7 +37,7 @@ import torch.nn as nn
 
 from unsloth.kernels.fast_lora import apply_lora_qkv
 from unsloth.kernels.utils import get_lora_parameters, matmul_lora, fast_dequantize, torch_amp_custom_fwd, torch_amp_custom_bwd
-
+SDPA_HAS_GQA = "enable_gqa" in scaled_dot_product_attention.__doc__
 
 __all__ = ["UnslothSparseLlamaAttention"]
 
@@ -273,12 +273,6 @@ class UnslothSparseLlamaAttention(SparseModule):
                     
         self.per_channel = not cfg.qk_per_head
         self.sparse_lora_branch = cfg.sparse_lora_branch
-        if cfg.add_sparse_to_dense:
-            raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-            self.dense_to_sparse_ratio = cfg.dense_to_sparse_ratio
-            print("Addint output token sparsity at ratio: ", self.dense_to_sparse_ratio)
-        else:
-            self.dense_to_sparse_ratio = None
 
 
     def kernel_proj_o_forward(self, x, masks, vo_indices):
@@ -287,18 +281,10 @@ class UnslothSparseLlamaAttention(SparseModule):
             return self.o_proj(x, vo_indices)
         
         else: #* Split
-            if self.dense_to_sparse_ratio is not None:
-                raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-                #* Dense to Sparse Ratio:
-                sparse_vo_indices, dense_vo_indices = vo_indices
-            else:
-                #* No Dense to Sparse Ratio:
-                sparse_vo_indices = vo_indices
-                dense_vo_indices = None
-            # print("Sparse Train, ", dense_vo_indices.shape, sparse_vo_indices.shape)
-            # sparse_vo_indices, dense_vo_indices = vo_indices
+            sparse_vo_indices = vo_indices
+            
             sparse_x, dense_x = self.token_splits(x, masks)
-            dense_o = self.o_proj(dense_x, dense_vo_indices)
+            dense_o = self.o_proj(dense_x)
             sparse_o = self.o_proj(sparse_x, sparse_vo_indices)
             
             # #* Token Order: [Sparse | Dense] --> [In | Out]
@@ -314,22 +300,10 @@ class UnslothSparseLlamaAttention(SparseModule):
             
         else: #* Split
             sparse_x, dense_x = self.token_splits(x, masks)
-            #* Output Sparsity:
-            if self.dense_to_sparse_ratio is not None:
-                raise ValueError("Dense to Sparse Ratio is not supported in Llama Attention")
-                #* Dense to Sparse Ratio:               
-                sparse_q_indices, dense_q_indices = sparse_q_indices
-                sparse_k_indices, dense_k_indices = sparse_k_indices
-                sparse_v_indices, dense_v_indices = sparse_v_indices
-            else:
-                dense_q_indices, dense_k_indices, dense_v_indices = None, None, None
-            # print("Sparse Train, ", dense_q_indices.shape, sparse_q_indices.shape)
-            
-            #* Dense Projections:
-            dense_q, dense_k, dense_v = self.q_proj(dense_x, dense_q_indices), self.k_proj(dense_x, dense_k_indices), self.v_proj(dense_x, dense_v_indices)
+            dense_q, dense_k, dense_v = self.q_proj(dense_x), self.k_proj(dense_x), self.v_proj(dense_x)
             sparse_q, sparse_k, sparse_v = self.q_proj(sparse_x, sparse_q_indices), self.k_proj(sparse_x, sparse_k_indices), self.v_proj(sparse_x, sparse_v_indices) 
 
-                #* Let's log the sparsity:
+            #* Let's log the sparsity:
             self.stats["sparsity/q"] = 1-self.q_proj.sparsity
             self.stats["sparsity/k"] = 1-self.k_proj.sparsity
             self.stats["sparsity/v"] = 1-self.v_proj.sparsity
@@ -452,7 +426,7 @@ class UnslothSparseLlamaAttention(SparseModule):
             V = torch.cat([past_key_value[1], V], dim = 2)
         pass
         past_key_value = (K, V) if use_cache else None
-
+        
         # Attention module
         if (not HAS_FLASH_ATTENTION and HAS_XFORMERS and attention_mask is None):
             # Xformers memory efficient attention

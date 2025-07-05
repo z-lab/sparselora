@@ -3,7 +3,6 @@ import sys
 import re
 from tqdm import tqdm
 import math
-from human_eval.data import write_jsonl, read_problems
 
 import torch
 import torch.distributed as dist
@@ -129,6 +128,7 @@ def main() -> None:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    from human_eval.data import write_jsonl, read_problems
     
     # Step 2: load dataset
     dataset = read_problems()

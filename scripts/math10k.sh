@@ -11,8 +11,8 @@ fi
 MODEL=${1:-"NousResearch/Meta-Llama-3-8B-Instruct"}
 SPARSITY_CONFIG=${2:-llama3-8b-math10k.yaml}
 
-#* Check Predictors:
-bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
+#* Check SVD Estimator:
+bash scripts/setup/svd_estimator.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 
 # Shift first 2 arguments so $@ contains only extras
 shift 2
@@ -39,7 +39,7 @@ torchrun --nproc_per_node=$NPROC \
     --spft configs/sparsity/$SPARSITY_CONFIG \
     "$@"  # <<-- forward all extra args
 
-torchrun --nproc_per_node=$NPROC \
+torchrun --nproc_per_node=8 \
     spft/train/main.py \
     --report_to none \
     --output_dir $CHECKPOINT_PATH \

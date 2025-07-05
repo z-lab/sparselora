@@ -128,6 +128,55 @@ def generate_and_tokenize_prompt_codefeedback(tokenizer, seq_len, data_point):
     return tokenized_full_prompt
 
 
+def tokenize_arc_agi(tokenizer, seq_len, messages, add_generation_prompt=False):
+    """Tokenizes a prompt from an ARC-AGI sample using a chat template."""
+
+    # Common kwargs for padding/truncation
+    kwargs = dict(
+        padding=True,
+        max_length=seq_len,
+        return_tensors=None,
+    )
+
+    # Step 1: Create prompt string using the chat template
+    prompt = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=add_generation_prompt  # or True if it's the user part
+    )
+    
+    tokenized_full_prompt = tokenizer(
+        prompt,
+        **kwargs
+    )
+    
+    tokenized_full_prompt = {"input_ids": torch.as_tensor(tokenized_full_prompt["input_ids"]),
+                             "labels": torch.as_tensor(tokenized_full_prompt["input_ids"].copy())}
+
+    return tokenized_full_prompt
+
+def generate_and_tokenize_arc_agi(tokenizer, seq_len, data_point):
+    """Generates and tokenizes a prompt from an ARC-AGI sample using a chat template."""
+
+    messages = data_point["messages"]
+    messages = [m for m in messages if m["content"].strip() != ""]
+
+    if not messages or messages[-1]["role"] != "assistant":
+        raise ValueError("Last message must be from the assistant.")
+
+    tokenized_full_prompt = tokenize_arc_agi(tokenizer, seq_len, messages, add_generation_prompt=False)
+    
+    
+    user_only_messages = messages[:-1]
+    tokenized_user_prompt = tokenize_arc_agi(tokenizer, seq_len, user_only_messages, add_generation_prompt=True)
+
+    # Apply -100 to the user part of the labels
+    user_prompt_len = len(tokenized_user_prompt["input_ids"])
+    tokenized_full_prompt["labels"][:user_prompt_len] = -100
+
+    return tokenized_full_prompt
+
+
 #* Dummy Dataset Collection:
 
 DATA_COLLECTION = {

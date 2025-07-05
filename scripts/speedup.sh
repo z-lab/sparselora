@@ -12,8 +12,8 @@ MODEL=${1:-"NousResearch/Meta-Llama-3-8B-Instruct"}
 SPARSITY_CONFIG=${2:-llama3-8b-math10k.yaml}
 DATASET=${3:-"math10k"}
 
-#* Check Predictors:
-bash scripts/setup/predictor.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
+#* Check SVD Estimator:
+bash scripts/setup/svd_estimator.sh $MODEL configs/sparsity/$SPARSITY_CONFIG
 
 # Shift first 2 arguments so $@ contains only extras
 shift 2

@@ -221,11 +221,6 @@ class UnslothSparseLlamaMLP(SparseModule):
             self.load_predictor(base,cfg)
             
         self.sparse_lora_branch = cfg.sparse_lora_branch
-        if cfg.add_sparse_to_dense:
-            self.dense_to_sparse_ratio = cfg.dense_to_sparse_ratio
-            print("Addint output token sparsity at ratio: ", self.dense_to_sparse_ratio)
-        else:
-            self.dense_to_sparse_ratio = None
     
     def pred_mlp(self, x: torch.Tensor, sparsity= None) -> torch.Tensor:
         with torch.no_grad():

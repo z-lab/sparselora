@@ -1,25 +1,37 @@
-try:
-    import unsloth
-except ImportError:
-    pass
-
+import os
 import torch
 from torch import distributed as dist
+
+
+world_size = int(os.environ.get("WORLD_SIZE", "1"))
+rank = int(os.environ.get("RANK", "0"))
+if world_size == 1 or rank == 0:
+    try:
+        import unsloth
+        print("[INFO] Imported unsloth.")
+    except ImportError:
+        print("[WARNING] Unsloth import failed.")
+else:
+   print("Unsloth is not available in distributed mode. If you are training with unsloth please run in single process mode.") 
+         
 import transformers
 from transformers import HfArgumentParser, set_seed
 from spft.api import SPFTConfig, get_spft_callback, get_spft_model
 from spft.callbacks import EvaluateFirstStepCallback
 from spft.train.args import DataTrainingArguments, ModelArguments, TrainingArguments
 from spft.utils.io import build_runname
-from spft.utils.model import create_model_and_tokenizer
 import yaml
 import sys
-import os
 import subprocess
 from spft.utils.data import load_dataset_by_name
-    
+
 
 def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_args: TrainingArguments, cli_keys: set) -> None:    # Set up SPFT
+    
+    if training_args.enable_unsloth:
+        #? Unsloth only patches if LoRA module present on component.
+        training_args.lora_target_modules = "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+    
     assert training_args.spft is not None, "SPFT is not enabled. Please set --spft to a valid path."
     spft_config = SPFTConfig.from_file(training_args.spft)
     spft_config.update([model_args, data_args, training_args], prefix="spft_", cli_keys=cli_keys)
@@ -31,11 +43,12 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
     spft_config.write_out(training_args.output_dir)
     
     if not training_args.eval_only:
-    
+        from spft.utils.model import create_model_and_tokenizer
         print("Launching Model: ", model_args.model_name_or_path)
         
         #* Create model + LoRA
         model, tokenizer = create_model_and_tokenizer(model_args, data_args, training_args)
+        spft_config.padding_side = tokenizer.padding_side
         
         callbacks = []
         model = get_spft_model(model, spft_config, enable_unsloth=training_args.enable_unsloth)
@@ -94,12 +107,24 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
         if "wizardlm" in data_args.dataset.lower():
             print(f"[INFO] Skipping Eval. Test for chat model must be conducted using FastChat")
             return
+        n_proc_per_node = dist.get_world_size() if dist.is_initialized() else 1
         
-        n_proc_per_node = dist.get_world_size()
+        if n_proc_per_node > 1:
+            print(f"[INFO] Running in distributed mode with {n_proc_per_node} processes.")
+            prefix_cmd = ["torchrun", f"--nproc_per_node={n_proc_per_node}", f"--master_port={29501}"]
+        else:
+            prefix_cmd = ["python"]
+
         if "code" in data_args.dataset.lower():
             main_file = "spft/test/code.py"
             add_args = [
                 "--base_model_name_or_path", model_args.model_name_or_path,
+            ]
+        elif "arc" in data_args.dataset.lower():
+            main_file = "spft/test/arc_agi/arc_agi.py"
+            add_args = [
+                "--base_model_name_or_path", model_args.model_name_or_path,
+                "--proc_count", str(torch.cuda.device_count()) #* Count number of GPUs visible
             ]
         else:
             main_file = "spft/test/main.py"
@@ -108,16 +133,17 @@ def main(model_args: ModelArguments, data_args: DataTrainingArguments, training_
             ]
         
         #* Launch Testing:
-        command = [
-            "torchrun", f"--nproc_per_node={n_proc_per_node}", f"--master_port={29501}",
-            main_file,
-            "--model_name_or_path", training_args.output_dir,
-        ] + add_args
+        command = prefix_cmd + [    
+                    main_file,
+                    "--model_name_or_path", training_args.output_dir,
+                ] + add_args
 
-        print(f"[INFO] Launching test with: {training_args.output_dir}")
-        if int(os.environ.get("RANK", 0)) == 0:
-            subprocess.run(command, check=True)
-            
+        
+        if int(os.environ.get("RANK", 0)) == 0 or not dist.is_initialized():
+            #* Only the main process should run the test
+            print(f"[INFO] Launching test with: {command}")
+            subprocess.run(command, check=True, stdout=None, stderr=None)
+          
 if __name__ == "__main__":
     
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))

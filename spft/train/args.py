@@ -24,11 +24,8 @@ class TrainingArguments(transformers.TrainingArguments):
     spft_sparse_lora_branch: bool = field(default=False)
     spft_qk_per_head: bool = field(default=False)
     spft_qkvo_seq_avg: bool = field(default=False)
-    spft_add_sparse_to_dense: bool = field(default=False)
-    spft_dense_to_sparse_ratio: float = field(default=0)
     spft_mlp_seq_avg: bool = field(default=True)
-    spft_min_sparse_length: int = field(default=0)
-    spft_benchmark: bool = field(default=False)
+    spft_sparse_output_tokens: float = field(default=0)
     
     
     eval_only: bool = field(default=False)
@@ -42,7 +39,7 @@ class TrainingArguments(transformers.TrainingArguments):
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default=None)
     
-    #* UltraChat args:
+    #* Instruction Following args:
     chat_template_format: Optional[str] = field(default="none")
 
 

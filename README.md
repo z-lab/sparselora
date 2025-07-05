@@ -168,6 +168,16 @@ To obtain the category-wise results as reported in our paper, run the following 
 python tools/mt-bench.py --judgement {PATH_TO: fastchat/llm_judge/data/mt_bench/model_judgment/gpt-4_single.jsonl} --question {PATH_TO: fastchat/llm_judge/data/mt_bench/question.jsonl}
 ```
 
+### Abstract & Reasoning Corpus of Artificial General Intelligence (ARC-AGI):
+![arcagi](assets/figures/arc-agi.png)
+
+SparseLoRA accelerates test-time training on the ARC-AGI dataset. We follow the training and evalution setting perscribed in [BARC](https://arxiv.org/abs/2411.02272). Evaluation is supported via [SGLang](https://github.com/sgl-project/sglang), please refer to their installation guide. The following script will launch sparse training followed by evaluation:
+
+```bash
+bash scripts/arc_agi.sh "barc0/Llama-3.1-ARC-Potpourri-Transduction-8B" "llama3.1-8b-arc-agi.yaml"
+```
+
+
 ## Efficiency Benchmark:
 
 ### Engineering Optimization:
@@ -219,7 +229,7 @@ bash scripts/setup/environment_setup.sh unsloth
 bash scripts/codefeedback.sh "NousResearch/Meta-Llama-3.1-8B" "llama3.1-8b-codefeedback.yaml" --enable-unsloth True
 ```
 
-Adding the `--enable-unsloth` argument works works on the reasoning, code generation, and instruction-following benchmarks. Be sure to checkout the default unsloth configurations under `spft/utils/model.py`. Alternatively our SparseLoRA/Unsloth compatible autograd functions (`spft/modules/unlsoth/*`) can be used out of place.
+Adding the `--enable-unsloth` argument works on the reasoning, code generation, and instruction-following benchmarks. Be sure to checkout the default unsloth configurations under `spft/utils/model.py`. Alternatively our SparseLoRA/Unsloth compatible autograd functions (`spft/modules/unlsoth/*`) can be used out of place.
 
 ## Citation
 If you find SparseLoRA useful or relevant to your project and research, please kindly cite our paper:
