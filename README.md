@@ -19,12 +19,10 @@ pip install git+https://github.com/z-lab/sparselora.git
 Add three lines to any LoRA training script:
 
 ```python
-from sparselora import SparseLoRAConfig, apply_sparselora     # 1. import
+from sparselora import SparseLoRAConfig, apply_sparselora
 
-config = SparseLoRAConfig.from_pretrained(                     # 2. load predictors
-    "z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA", mode="o1",
-)
-model = apply_sparselora(model, config)                        # 3. apply (after get_peft_model)
+config = SparseLoRAConfig.from_pretrained("z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA", mode="o1")
+model = apply_sparselora(model, config)
 ```
 
 Full example:
