@@ -9,13 +9,16 @@ from safetensors.torch import load_file
 from sparselora.modules.predictors import FFNPredictor, AttentionPredictor, GQAAttentionPredictor
 
 
+def _resolve_safetensors(path: str) -> str:
+    local = os.path.join(path, "model.safetensors")
+    if os.path.isfile(local):
+        return local
+    from huggingface_hub import hf_hub_download
+    return hf_hub_download(path, "model.safetensors")
+
+
 def _load_tensors(cfg: Any, device, dtype) -> dict:
-    path = os.path.join(cfg.path, "model.safetensors")
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"SVD predictors not found at {path}. "
-            f"Set config.path to a directory containing model.safetensors."
-        )
+    path = _resolve_safetensors(cfg.path)
     return {k: v.to(device=device, dtype=dtype) for k, v in load_file(path).items()}
 
 

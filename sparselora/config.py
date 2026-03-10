@@ -12,16 +12,15 @@ class SparseLoRAConfig:
         layer_sparsity: Per-layer sparsity fractions
             (e.g. ``{"model.layers.3.mlp": 0.5}``).
         predictor_rank: Rank of the SVD sparsity predictor.
-        path: Path to the SparseLoRA model directory containing
-            ``model.safetensors`` and ``config.json``.
+        path: Local directory or HuggingFace repo ID (e.g. ``z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA``)
+            containing ``model.safetensors`` and ``config.json``.
         start_step: Fraction of training at which to enable sparsity (0-1).
         end_step: Fraction of training at which to disable sparsity (0-1).
 
     Example::
 
         config = SparseLoRAConfig.from_pretrained(
-            "models/NousResearch/Meta-Llama-3-8B-Instruct-SparseLoRA",
-            mode="o2",
+            "z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA", mode="o2",
         )
         model = apply_sparselora(model, config)
     """
@@ -37,11 +36,17 @@ class SparseLoRAConfig:
         """Load from a SparseLoRA model directory.
 
         Args:
-            path: Directory containing ``config.json`` and ``model.safetensors``.
+            path: Local directory or HuggingFace repo ID.
             mode: Sparsity mode (``"o1"`` = conservative, ``"o2"`` = aggressive).
             **kwargs: Override any config field (e.g. ``start_step=0.05``).
         """
-        with open(os.path.join(path, "config.json")) as f:
+        if os.path.isdir(path):
+            config_path = os.path.join(path, "config.json")
+        else:
+            from huggingface_hub import hf_hub_download
+            config_path = hf_hub_download(path, "config.json")
+
+        with open(config_path) as f:
             data = json.load(f)
 
         modes = data.get("modes", {})
