@@ -3,7 +3,9 @@ dist/
 *.egg-info/
 __pycache__/
 *.pyc
+*.log
 .DS_Store
 
 datasets/
 checkpoints/
+_tmp_adapters/

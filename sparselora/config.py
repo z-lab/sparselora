@@ -73,7 +73,7 @@ class SparseLoRAConfig:
     @classmethod
     def from_dict(cls, data: dict) -> "SparseLoRAConfig":
         """Create from a dictionary, ignoring unknown keys."""
-        valid = {f.name for f in cls.__dataclass_fields__.values()}
+        valid = set(cls.__dataclass_fields__)
         return cls(**{k: v for k, v in data.items() if k in valid})
 
     def to_dict(self) -> dict:

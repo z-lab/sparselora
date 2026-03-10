@@ -64,10 +64,6 @@ def main():
     parser.add_argument("--max_new_tokens", type=int, default=32)
     args = parser.parse_args()
 
-    is_math = bool(MATH_DATASETS & set(args.dataset.split("+")))
-    if is_math:
-        args.max_new_tokens = 256
-
     if "RANK" in os.environ:
         dist.init_process_group("nccl")
     local_rank = int(os.environ.get("LOCAL_RANK", 0))

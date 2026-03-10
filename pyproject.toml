@@ -18,6 +18,7 @@ dependencies = [
     "transformers>=4.40.0",
     "peft>=0.10.0",
     "liger-kernel",
+    "huggingface-hub",
     "safetensors",
     "pyyaml",
     "tqdm",
