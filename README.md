@@ -11,10 +11,23 @@ Drop-in acceleration for LoRA fine-tuning. SparseLoRA predicts and skips redunda
 ## Installation
 
 ```bash
-pip install -e .
+pip install git+https://github.com/z-lab/sparselora.git
 ```
 
 ## Quick Start
+
+Add three lines to any LoRA training script:
+
+```python
+from sparselora import SparseLoRAConfig, apply_sparselora     # 1. import
+
+config = SparseLoRAConfig.from_pretrained(                     # 2. load predictors
+    "z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA", mode="o1",
+)
+model = apply_sparselora(model, config)                        # 3. apply (after get_peft_model)
+```
+
+Full example:
 
 ```python
 from transformers import AutoModelForCausalLM, Trainer
@@ -22,12 +35,9 @@ from peft import get_peft_model, LoraConfig
 from sparselora import SparseLoRAConfig, apply_sparselora
 
 model = AutoModelForCausalLM.from_pretrained("NousResearch/Meta-Llama-3-8B-Instruct")
-model = get_peft_model(model, LoraConfig(r=32, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
+model = get_peft_model(model, LoraConfig(r=32, target_modules="all-linear"))
 
-config = SparseLoRAConfig.from_pretrained(
-    "z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA",
-    mode="o1",
-)
+config = SparseLoRAConfig.from_pretrained("z-lab/Meta-Llama-3-8B-Instruct-SparseLoRA", mode="o1")
 model = apply_sparselora(model, config)
 
 trainer = Trainer(model=model, ...)
@@ -47,10 +57,10 @@ Each directory contains `config.json` (per-layer sparsity for each mode) and `mo
 ## Reproducing Experiments
 
 ```bash
-pip install -e ".[train]"
+bash experiments/scripts/setup.sh
 
-bash experiments/scripts/math10k.sh "NousResearch/Meta-Llama-3-8B-Instruct" o2
-bash experiments/scripts/csr170k.sh "NousResearch/Meta-Llama-3-8B-Instruct" o1
+bash experiments/scripts/csr170k.sh
+bash experiments/scripts/math10k.sh
 ```
 
 ## Citation

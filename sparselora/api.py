@@ -103,7 +103,7 @@ def apply_sparselora(model: nn.Module, config: SparseLoRAConfig) -> nn.Module:
     module_map = get_module_mapping()
     show = not (dist.is_initialized() and dist.get_rank() != 0)
 
-    with tqdm(total=sum(1 for _ in model.named_modules()), desc="[SparseLoRA] Patching", disable=not show) as pbar:
+    with tqdm(total=sum(1 for _ in model.named_modules()), desc="Applying SparseLoRA", disable=not show) as pbar:
         for name, module in model.named_modules():
             layer_name, sparsity = next(
                 ((s, v) for s, v in config.layer_sparsity.items() if name.endswith(s)),
