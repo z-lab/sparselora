@@ -1,0 +1,10 @@
+datasets
+accelerate>=0.25.0
+trl
+liger-kernel
+sentencepiece
+tabulate
+openpyxl
+pandas
+rich
+pydantic
