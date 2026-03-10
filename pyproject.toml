@@ -11,9 +11,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 description = "SparseLoRA: Accelerating LLM Fine-Tuning with Contextual Sparsity"
-authors = [
-    {name = "Samir Khaki", email = "samir.khaki@mail.utoronto.ca"},
-]
+authors = [{name = "Z Lab"}]
 
 dependencies = [
     "torch>=2.1.0",
